@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
 {
-    internal class Animal
+    public class Animal
     {
         public Animal(string iD, string name, string species, int age, int recoveryScore, string status, string housingUnit)
         {

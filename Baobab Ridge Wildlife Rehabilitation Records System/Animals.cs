@@ -11,17 +11,18 @@ using System.Windows.Forms;
 
 namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
 {
-    public partial class Form1 : Form
+    public partial class Animals : Form
     {
         public string filePath = "animals.txt";
-        public List<Animal> animalList = new List<Animal>();
-        public Form1()
+        private List<Animal> animalList = new List<Animal>();
+        public Animals()
         {
             InitializeComponent();
-        }
-        private void Form1_Load(object sender, EventArgs e)
-        {
             SetupDataGridView();
+        }
+        private void Animals_Load_1(object sender, EventArgs e)
+        {
+           
             RefreshGrid();
         }
 
@@ -49,6 +50,7 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
             {
                 MessageBox.Show("An unexpected error occurred while crating the file: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
 
         private void LoadAnimalData()
         {
@@ -118,26 +120,27 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
 
         public void SetupDataGridView()
         {
-            dataGridView1.ColumnCount = 7;
-            dataGridView1.Columns[0].Name = "ID";
-            dataGridView1.Columns[1].Name = "Name";
-            dataGridView1.Columns[2].Name = "Species";
-            dataGridView1.Columns[3].Name = "Age";
-            dataGridView1.Columns[4].Name = "Score";
-            dataGridView1.Columns[5].Name = "Status";
-            dataGridView1.Columns[6].Name = "House";
-            dgvAnimals.ReadOnly = true;
-            dgvAnimals.AllowUserToAddRows = false;
-            dgvAnimals.AllowUserToDeleteRows = false;
-            dgvAnimals.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvAnimals.MultiSelect = false;
-            dgvAnimals.AutoGenerateColumns = false;
+            DGVAnimals.ReadOnly = true;
+            DGVAnimals.AllowUserToAddRows = false;
+            DGVAnimals.AllowUserToDeleteRows = false;
+            DGVAnimals.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            DGVAnimals.MultiSelect = false;
+            DGVAnimals.AutoGenerateColumns = false;
+
+            DGVAnimals.Columns.Clear();
+            DGVAnimals.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ID", HeaderText = "Animal ID", Name = "colID" });
+            DGVAnimals.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Name", HeaderText = "Name", Name = "colName" });
+            DGVAnimals.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Species", HeaderText = "Species", Name = "colSpecies" });
+            DGVAnimals.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Age", HeaderText = "Age", Name = "colAge" });
+            DGVAnimals.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "RecoveryScore", HeaderText = "Recovery Score", Name = "colScore" });
+            DGVAnimals.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Status", HeaderText = "Status", Name = "colStatus" });
+            DGVAnimals.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "HousingUnit", HeaderText = "Housing Unit", Name = "colHouse" });
         }
         public void RefreshGrid()
         {
             LoadAnimalData();
-            dgvAnimals.DataSource = null;
-            dgvAnimals.DataSource = animalList;
+            DGVAnimals.DataSource = null;
+            DGVAnimals.DataSource = animalList;
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -149,6 +152,8 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
         {
 
         }
+
+        
+        
     }
-}
 }
