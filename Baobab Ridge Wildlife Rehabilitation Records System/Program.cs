@@ -16,7 +16,7 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            Application.Run(new Animals());
         }
     }
 }
