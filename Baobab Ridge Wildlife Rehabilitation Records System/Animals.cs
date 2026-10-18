@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Text;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -22,7 +24,7 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
         }
         private void Animals_Load_1(object sender, EventArgs e)
         {
-           
+
             RefreshGrid();
         }
 
@@ -51,6 +53,19 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
                 MessageBox.Show("An unexpected error occurred while crating the file: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+            private void ClearForm()
+        { 
+        AnimalTB.Clear();
+            NameTB.Clear();
+            SpeciesTB.Clear();
+            AgeTB.Clear();
+          
+  
+            }
+
+
+
 
         private void LoadAnimalData()
         {
@@ -143,6 +158,10 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
             DGVAnimals.DataSource = animalList;
         }
 
+
+
+
+
         private void button2_Click(object sender, EventArgs e)
         {
 
@@ -153,7 +172,91 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
 
         }
 
-        
-        
+        private void DeleteButton_Click(object sender, EventArgs e)
+        {
+
+
+            if (DGVAnimals.CurrentRow == null)
+            {
+
+                MessageBox.Show("Please select an animal to delete.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                return;
+            }
+
+            Animal selected = DGVAnimals.CurrentRow.DataBoundItem as Animal;
+            if (selected == null)
+            {
+                MessageBox.Show("Could not identify the selected animal.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            string IDtoDelete = selected.ID;
+            string nameToDelete = selected.Name;
+
+
+            DialogResult result = MessageBox.Show($"Are you sure you want to delete {nameToDelete} (ID: {IDtoDelete})? This action cannot be undone.", "Confirm Deletion", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if (result != DialogResult.Yes) return;
+            {
+                try
+                {
+                    string[] alllines = File.ReadAllLines(filePath);
+                    List<string> KeptLines = new List<string>();
+
+                    foreach (string line in alllines)
+                    {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        {
+                            string[] parts = line.Split('|');
+
+                            if (parts.Length < 1) continue;
+                            {
+                                string lineID = parts[0].Trim().ToUpper();
+                                if (lineID != IDtoDelete.ToUpper())
+                                {
+                                    KeptLines.Add(line);
+                                }
+                            }
+
+                            File.WriteAllLines(filePath, KeptLines);
+
+                            RefreshGrid();
+
+                            if (AnimalTB.Text.Trim().ToUpper() == IDtoDelete.ToUpper())
+                            {
+                                ClearForm();
+
+                            }
+
+                            MessageBox.Show($"{nameToDelete} (ID: {IDtoDelete}) has been deleted successfully.", "Deletion Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        }
+
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("An error occurred while deleting the animal: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+            }
+
+
+
+        }
+
+        private void SummaryButton_Click(object sender, EventArgs e)
+        {
+
+
+
+
+
+        }
     }
+
 }
+    
+
