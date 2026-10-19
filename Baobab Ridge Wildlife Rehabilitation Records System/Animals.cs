@@ -17,6 +17,12 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
     {
         public string filePath = "animals.txt";
         private List<Animal> animalList = new List<Animal>();
+
+        // State variables for Add/Edit mode
+        private bool isEditMode = false;
+        private string currentEditingId = null;
+        private string currentEditingStatus = null;
+        private string currentEditingHousing = null;
         public Animals()
         {
             InitializeComponent();
@@ -164,7 +170,75 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
 
         private void button2_Click(object sender, EventArgs e)
         {
+            //Ensure we are in Add Mode
+            if (isEditMode) return; // Safety check
 
+            //  Get data from form
+            string id = AnimalTB.Text.Trim().ToUpper();
+            string name = NameTB.Text.Trim();
+            string species = SpeciesTB.Text.Trim();
+            string ageText = AgeTB.Text.Trim();
+            string scoreText = RCtb.Text.Trim(); 
+            
+
+            // Validation (Reusing your existing validation logic)
+            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(name) || string.IsNullOrEmpty(species) || string.IsNullOrEmpty(ageText))
+            {
+                MessageBox.Show("Please fill in all fields.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Check ID format (WR- + 4 digits)
+            if (id.Length != 7 || !id.StartsWith("WR-") || !int.TryParse(id.Substring(3), out _))
+            {
+                MessageBox.Show("Animal ID must be in the format 'WR-0000'.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Check if ID already exists
+            if (animalList.Any(a => a.ID.Equals(id, StringComparison.OrdinalIgnoreCase)))
+            {
+                MessageBox.Show("An animal with this ID already exists.", "Duplicate ID", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Check Age
+            if (!int.TryParse(ageText, out int age) || age < 0 || age > 100)
+            {
+                MessageBox.Show("Age must be a valid number between 0 and 100.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Check Score
+            if (!int.TryParse(scoreText, out int score) || score < 0 || score > 100)
+            {
+                MessageBox.Show("Recovery Score must be a valid number between 0 and 100.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                //  Create the new line. 
+                // NOTE: We must provide default values for Status and Housing because your GUI doesn't have textboxes for them.
+                // You can change "Stable" and "Recovery Ward" to whatever defaults you prefer.
+                string defaultStatus = "Stable";
+                string defaultHousing = "Recovery Ward";
+
+                string newLine = $"{id} | {name} | {species} | {age} | {score} | {defaultStatus} | {defaultHousing}";
+
+                //  Append to the file
+                File.AppendAllText(filePath, newLine + Environment.NewLine);
+
+                MessageBox.Show("Animal added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                //  Refresh grid and clear form
+                RefreshGrid();
+                ClearForm();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while adding the animal: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void label4_Click(object sender, EventArgs e)
@@ -348,6 +422,8 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
 
         private List<Animal> LoadAnimalsforSummary()
         {
+
+
             List<Animal> result = new List<Animal>();
             EnsureFileExists();
             try
@@ -383,10 +459,156 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
             }
             return result;
         }
+        
+        private void SearchButton_Click(object sender, EventArgs e)
+        {
+            string searchTerm = SearchIDTB.Text.Trim();
+
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                MessageBox.Show("Please enter an Animal ID to search.", "Input Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            
+            Animal foundAnimal = animalList.FirstOrDefault(a => a.ID.Equals(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+            if (foundAnimal != null)
+            {
+                
+                foreach (DataGridViewRow row in DGVAnimals.Rows)
+                {
+                    if (row.DataBoundItem == foundAnimal)
+                    {
+                        row.Selected = true;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Animal ID not found.", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        
+        }
 
 
+       
+        private void Savebutton_Click(object sender, EventArgs e)
+        {
+            if (!isEditMode) return;
 
+           
+            string newName = NameTB.Text.Trim();
+            string newSpecies = SpeciesTB.Text.Trim();
+            string ageText = AgeTB.Text.Trim();
+            string scoreText = RCtb.Text.Trim();
+            
+            
+            
 
+           
+            if (string.IsNullOrEmpty(newName) || string.IsNullOrEmpty(newSpecies) || string.IsNullOrEmpty(ageText))
+            {
+                MessageBox.Show("Please fill in all fields.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!int.TryParse(ageText, out int age) || age < 0 || age > 100)
+            {
+                MessageBox.Show("Age must be a valid number between 0 and 100.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!int.TryParse(scoreText, out int score) || score < 0 || score > 100)
+            {
+                MessageBox.Show("Recovery Score must be a valid number between 0 and 100.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                string[] lines = File.ReadAllLines(filePath);
+                List<string> updatedLines = new List<string>();
+
+               
+                foreach (string line in lines)
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    string[] parts = line.Split('|');
+                    if (parts.Length == 7)
+                    {
+                        string lineId = parts[0].Trim().ToUpper();
+
+                        
+                        if (lineId == currentEditingId)
+                        {
+                            
+                            string updatedLine = $"{currentEditingId} | {newName} | {newSpecies} | {age} | {score} | {currentEditingStatus} | {currentEditingHousing}";
+                            updatedLines.Add(updatedLine);
+                        }
+                        else
+                        {
+                            updatedLines.Add(line); 
+                        }
+                    }
+                    else
+                    {
+                        updatedLines.Add(line);
+                    }
+                }
+
+                File.WriteAllLines(filePath, updatedLines);
+
+                MessageBox.Show("Animal updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+               
+                RefreshGrid();
+                ClearForm();
+                DGVAnimals.ClearSelection();
+
+                isEditMode = false;
+                currentEditingId = null;
+                AnimalTB.ReadOnly = false;
+                Addbutton.Enabled = true;
+                Savebutton.Enabled = false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while saving changes: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void DGVAnimals_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void ClearButton_Click(object sender, EventArgs e)
+        {
+            
+            AnimalTB.Clear();
+            NameTB.Clear();
+            SpeciesTB.Clear();
+            AgeTB.Clear();
+            RCtb.Clear(); 
+
+            
+            
+            DGVAnimals.ClearSelection();
+
+            
+            isEditMode = false;
+            currentEditingId = null;
+            currentEditingStatus = null;
+            currentEditingHousing = null;
+
+            
+            AnimalTB.ReadOnly = false;      
+            Addbutton.Enabled = true; 
+            Savebutton.Enabled = false;     
+        }
     }
 }
     
