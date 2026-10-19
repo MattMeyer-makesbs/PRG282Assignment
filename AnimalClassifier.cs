@@ -26,7 +26,15 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
         {
             if (recoveryScore < 0 || recoveryScore > 100)
             {
-                throw new ArgumentOutOfRangeException(nameof(recoveryScore), "Recovery Score must be between 0 and 100.");
+                // Exception handling
+                try
+                {
+                    throw new ArgumentOutOfRangeException(nameof(recoveryScore), "Recovery Score must be between 0 and 100.");
+                }
+                catch(ArgumentOutOfRangeException)
+                {
+                    
+                }
             }
 
             if (recoveryScore <= 19)
