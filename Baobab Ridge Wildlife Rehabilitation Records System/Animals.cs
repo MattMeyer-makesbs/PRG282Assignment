@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Text;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -22,7 +24,7 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
         }
         private void Animals_Load_1(object sender, EventArgs e)
         {
-           
+
             RefreshGrid();
         }
 
@@ -51,6 +53,19 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
                 MessageBox.Show("An unexpected error occurred while crating the file: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        private void ClearForm()
+        {
+            AnimalTB.Clear();
+            NameTB.Clear();
+            SpeciesTB.Clear();
+            AgeTB.Clear();
+
+
+        }
+
+
+
 
         private void LoadAnimalData()
         {
@@ -143,6 +158,10 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
             DGVAnimals.DataSource = animalList;
         }
 
+
+
+
+
         private void button2_Click(object sender, EventArgs e)
         {
 
@@ -153,7 +172,222 @@ namespace Baobab_Ridge_Wildlife_Rehabilitation_Records_System
 
         }
 
-        
-        
+        private void DeleteButton_Click(object sender, EventArgs e)
+        {
+
+
+            if (DGVAnimals.CurrentRow == null)
+            {
+
+                MessageBox.Show("Please select an animal to delete.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                return;
+            }
+
+            Animal selected = DGVAnimals.CurrentRow.DataBoundItem as Animal;
+            if (selected == null)
+            {
+                MessageBox.Show("Could not identify the selected animal.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            string IDtoDelete = selected.ID;
+            string nameToDelete = selected.Name;
+
+
+            DialogResult result = MessageBox.Show($"Are you sure you want to delete {nameToDelete} (ID: {IDtoDelete})? This action cannot be undone.", "Confirm Deletion", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if (result != DialogResult.Yes) return;
+            {
+                try
+                {
+                    string[] alllines = File.ReadAllLines(filePath);
+                    List<string> KeptLines = new List<string>();
+
+                    foreach (string line in alllines)
+                    {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        {
+                            string[] parts = line.Split('|');
+
+                            if (parts.Length < 1) continue;
+                            {
+                                string lineID = parts[0].Trim().ToUpper();
+                                if (lineID != IDtoDelete.ToUpper())
+                                {
+                                    KeptLines.Add(line);
+                                }
+                            }
+
+                            File.WriteAllLines(filePath, KeptLines);
+
+                            RefreshGrid();
+
+                            if (AnimalTB.Text.Trim().ToUpper() == IDtoDelete.ToUpper())
+                            {
+                                ClearForm();
+
+                            }
+
+                            MessageBox.Show($"{nameToDelete} (ID: {IDtoDelete}) has been deleted successfully.", "Deletion Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        }
+
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("An error occurred while deleting the animal: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+            }
+
+
+
+        }
+
+
+
+        private void SummaryButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                List<Animal> animals = LoadAnimalsforSummary();
+
+                int total = animals.Count;
+                double averageAge = 0;
+                double averageScore = 0;
+
+                int critical = 0, serious = 0, stable = 0, recovered = 0, releaseReady = 0;
+
+
+                if (total > 0)
+                {
+
+                    double ageSum = 0, scoreSum = 0;
+
+                    foreach (Animal a in animals)
+                    {
+                        ageSum += a.Age;
+                        scoreSum += a.RecoveryScore;
+
+                        switch (a.Status)
+                        {
+                            case
+                            "Critical":
+                                critical++;
+                                break;
+                            case
+                            "Serious":
+                                serious++;
+                                break;
+                            case
+                             "Stable":
+                                stable++;
+                                break;
+                            case
+                                "Recovering":
+                                recovered++;
+                                break;
+
+                            case
+                                "Release Ready":
+                                releaseReady++;
+                                break;
+                        }
+
+                    }
+                    averageAge = ageSum / total;
+                    averageScore = scoreSum / total;
+                }
+
+
+                string agetext = total == 0 ? "N/A" : averageAge.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+                string scoretext = total == 0 ? "N/A" : averageScore.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+
+
+                label7.Text =
+                    $"Total Animals: {total}" +
+                    $"\nAverage Age: {agetext}" +
+                    $"\nAverage Recovery Score: {scoretext}" +
+                    $"\n\nStatus Counts:" +
+                    $"\nCritical: {critical}" +
+                    $"\nSerious: {serious}" +
+                    $"\nStable: {stable}" +
+                    $"\nRecovering: {recovered}" +
+                    $"\nRelease Ready: {releaseReady}";
+
+                string summaryfile = Path.Combine(Application.StartupPath, "Summary.txt");
+
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine("BAOBAB RIDGE WILDLIFE REHABILITATION CENTRE ANIMAL SUMMARY REPORT");
+                sb.AppendLine("Generated:" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:mm"));
+                sb.AppendLine();
+                sb.AppendLine($"Total Animals: {total}");
+                sb.AppendLine($"Average Age: {agetext}");
+                sb.AppendLine($"Average Recovery Score: {scoretext}");
+                sb.AppendLine();
+                sb.AppendLine("Animals per Status:");
+                sb.AppendLine($"Critical: {critical}");
+                sb.AppendLine($"Serious: {serious}");
+                sb.AppendLine($"Stable: {stable}");
+                sb.AppendLine($"Recovering: {recovered}");
+                sb.AppendLine($"Release Ready: {releaseReady}");
+
+                File.WriteAllText(summaryfile, sb.ToString());
+
+                MessageBox.Show($"Report Summary generated successfully at {summaryfile}.", "Summary Report", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while generating the summary report: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+            }
+        }
+
+        private List<Animal> LoadAnimalsforSummary()
+        {
+            List<Animal> result = new List<Animal>();
+            EnsureFileExists();
+            try
+            {
+                string[] info = File.ReadAllLines(filePath);
+                foreach (string line in info)
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    string[] parts = line.Split('|');
+                    if (parts.Length != 7) continue;
+                    {
+                        string id = parts[0].Trim().ToUpper();
+                        string name = parts[1].Trim();
+                        string species = parts[2].Trim();
+                        string ageStr = parts[3].Trim();
+                        string scoreStr = parts[4].Trim();
+                        string status = parts[5].Trim();
+                        string housing = parts[6].Trim();
+
+
+                        if (id.Length != 7 || !id.StartsWith("WR-")) continue;
+                        if (!int.TryParse(ageStr, out int age)) continue;
+                        if (!int.TryParse(scoreStr, out int score)) continue;
+
+                        result.Add(new Animal(id, name, species, age, score, status, housing));
+                    }
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while loading data for summary: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            return result;
+        }
+
+
+
+
     }
 }
+    
+
