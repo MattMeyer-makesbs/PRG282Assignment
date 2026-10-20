@@ -3,7 +3,7 @@
 ## Team Members
 * **Matthew Meyer** - Project Setup, Viewing, Create Form
 * **Galaletsang Mahlahlane** -  Add Animal , Validation and Classification
-* **Vusumuzi Hlongwa** -  Search Update
+* **Vusumuzi Hlongwa** -  Search ,Update
 * **Tshepo Matsepe** - Delete , Summary 
 
 ## How to Build and Run
